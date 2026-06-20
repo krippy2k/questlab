@@ -3,6 +3,7 @@ import {
   Settings, 
   FileText,
   Layers,
+  Users,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -50,6 +51,14 @@ export function AppSidebar() {
                   <Link to="/page2">
                     <Layers className="w-4 h-4" />
                     <span>Page 2</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip="NPC Generator" isActive={isActive('/npc-generator')} asChild>
+                  <Link to="/npc-generator">
+                    <Users className="w-4 h-4" />
+                    <span>NPC Generator</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

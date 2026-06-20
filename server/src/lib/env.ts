@@ -79,6 +79,20 @@ export function getAllowAnonymousUsers(): boolean {
 }
 
 /**
+ * OpenAI API key for server-side generation features.
+ */
+export function getOpenAIApiKey(): string {
+  return getRequiredEnv('OPENAI_API_KEY');
+}
+
+/**
+ * OpenAI chat model for text generation. Defaults to gpt-4o-mini.
+ */
+export function getOpenAITextModel(): string {
+  return getEnv('OPENAI_TEXT_MODEL', 'gpt-4o-mini') ?? 'gpt-4o-mini';
+}
+
+/**
  * For Node.js environments - get process.env
  */
 export function getNodeEnv() {
