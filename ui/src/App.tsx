@@ -6,8 +6,6 @@ import { Navbar } from '@/components/navbar';
 import { AppSidebar } from '@/components/appSidebar';
 import { Home } from '@/pages/Home';
 import { Settings } from '@/pages/Settings';
-import { Page1 } from '@/pages/Page1';
-import { Page2 } from '@/pages/Page2';
 import { NpcGenerator } from '@/pages/NpcGenerator';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import {
@@ -66,8 +64,6 @@ function AppContent() {
               <main className="flex-1">
                 <Routes>
                   <Route path="/" element={<Home />} />
-                  <Route path="/page1" element={<Page1 />} />
-                  <Route path="/page2" element={<Page2 />} />
                   <Route path="/npc-generator" element={<NpcGenerator />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
