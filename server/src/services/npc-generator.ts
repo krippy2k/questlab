@@ -1,9 +1,8 @@
 import { TRPCError } from '@trpc/server';
 import { APIError } from 'openai';
-import { getOpenAIClient } from '../lib/openai';
+import { getOpenAIClient, OpenAINotConfiguredError } from '../lib/openai';
 import { getOpenAITextModel } from '../lib/env';
 import {
-  npcGenerateInputSchema,
   npcTextOutputSchema,
   type NpcGenerateInput,
   type NpcGenerateOutput,
@@ -18,6 +17,13 @@ Honor the user's prompt, setting, and tone when provided.`;
 function mapOpenAIError(error: unknown): TRPCError {
   if (error instanceof TRPCError) {
     return error;
+  }
+
+  if (error instanceof OpenAINotConfiguredError) {
+    return new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'NPC generation is temporarily unavailable.',
+    });
   }
 
   const apiError = error instanceof APIError ? error : undefined;
@@ -136,8 +142,7 @@ async function generateNpcPortrait(name: string, description: string): Promise<s
   return imageBase64;
 }
 
-export async function generateNpc(rawInput: NpcGenerateInput): Promise<NpcGenerateOutput> {
-  const input = npcGenerateInputSchema.parse(rawInput);
+export async function generateNpc(input: NpcGenerateInput): Promise<NpcGenerateOutput> {
   const { name, description } = await generateNpcText(input);
   const imageBase64 = await generateNpcPortrait(name, description);
 

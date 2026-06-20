@@ -36,14 +36,19 @@ export function NpcGenerator() {
   const isGenerating = generateMutation.isPending;
   const result = generateMutation.data;
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
+  const submitGeneration = () => {
     setCopied(false);
+    generateMutation.reset();
     generateMutation.mutate({
       prompt: form.prompt.trim(),
       setting: form.setting.trim() || undefined,
       tone: form.tone.trim() || undefined,
     });
+  };
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    submitGeneration();
   };
 
   const handleCopyDescription = async () => {
@@ -61,12 +66,7 @@ export function NpcGenerator() {
   };
 
   const handleGenerateAgain = () => {
-    setCopied(false);
-    generateMutation.mutate({
-      prompt: form.prompt.trim(),
-      setting: form.setting.trim() || undefined,
-      tone: form.tone.trim() || undefined,
-    });
+    submitGeneration();
   };
 
   return (

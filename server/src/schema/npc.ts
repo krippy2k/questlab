@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 export const npcGenerateInputSchema = z.object({
-  prompt: z.string().min(1).max(2000),
-  setting: z.string().max(500).optional(),
-  tone: z.string().max(200).optional(),
+  prompt: z.string().trim().min(1).max(2000),
+  setting: z.string().trim().max(500).optional(),
+  tone: z.string().trim().max(200).optional(),
 });
 
 export const npcGenerateOutputSchema = z.object({

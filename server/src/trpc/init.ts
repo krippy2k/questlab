@@ -34,3 +34,16 @@ const requireUser = t.middleware(({ ctx, next }) => {
 });
 
 export const protectedProcedure = t.procedure.use(requireUser);
+
+const requireSignedInUser = t.middleware(({ ctx, next }) => {
+  if (!ctx.user!.email) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Sign in with an account to use NPC generation.',
+    });
+  }
+  return next({ ctx });
+});
+
+/** Requires a non-anonymous account (email present). Use for paid API features. */
+export const signedInProcedure = protectedProcedure.use(requireSignedInUser);

@@ -1,9 +1,9 @@
 import { npcGenerateInputSchema, npcGenerateOutputSchema } from '../../schema/npc';
 import { generateNpc } from '../../services/npc-generator';
-import { protectedProcedure, router } from '../init';
+import { router, signedInProcedure } from '../init';
 
 export const npcRouter = router({
-  generate: protectedProcedure
+  generate: signedInProcedure
     .input(npcGenerateInputSchema)
     .mutation(async ({ input }) => {
       const result = await generateNpc(input);
