@@ -1,7 +1,7 @@
 import { 
   Home, 
   Settings, 
-  Users,
+  Globe,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -20,6 +20,7 @@ export function AppSidebar() {
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
+  const isWorldsActive = location.pathname.startsWith('/worlds');
 
   return (
     <Sidebar collapsible="icon" className="sticky top-12 h-[calc(100vh-3rem)] z-40">
@@ -37,10 +38,10 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="NPC Generator" isActive={isActive('/npc-generator')} asChild>
-                  <Link to="/npc-generator">
-                    <Users className="w-4 h-4" />
-                    <span>NPC Generator</span>
+                <SidebarMenuButton tooltip="Worlds" isActive={isWorldsActive} asChild>
+                  <Link to="/worlds">
+                    <Globe className="w-4 h-4" />
+                    <span>Worlds</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

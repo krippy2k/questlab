@@ -6,8 +6,11 @@ import { Navbar } from '@/components/navbar';
 import { AppSidebar } from '@/components/appSidebar';
 import { Home } from '@/pages/Home';
 import { Settings } from '@/pages/Settings';
-import { NpcGenerator } from '@/pages/NpcGenerator';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { WorldsList } from '@/pages/WorldsList';
+import { WorldDetail } from '@/pages/WorldDetail';
+import { WorldNpcGenerator } from '@/pages/WorldNpcGenerator';
+import { WorldNpcDetail } from '@/pages/WorldNpcDetail';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import {
   SidebarProvider,
   SidebarInset,
@@ -64,7 +67,11 @@ function AppContent() {
               <main className="flex-1">
                 <Routes>
                   <Route path="/" element={<Home />} />
-                  <Route path="/npc-generator" element={<NpcGenerator />} />
+                  <Route path="/worlds" element={<WorldsList />} />
+                  <Route path="/worlds/:worldId" element={<WorldDetail />} />
+                  <Route path="/worlds/:worldId/npcs" element={<WorldNpcGenerator />} />
+                  <Route path="/worlds/:worldId/npcs/:npcId" element={<WorldNpcDetail />} />
+                  <Route path="/npc-generator" element={<Navigate to="/worlds" replace />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
               </main>

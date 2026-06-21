@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Copy, RefreshCw, Sparkles, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Copy, RefreshCw, Save, Sparkles, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,19 +22,34 @@ type FormState = {
   tone: string;
 };
 
-const initialForm: FormState = {
-  prompt: '',
-  setting: '',
-  tone: '',
-};
+export function WorldNpcGenerator() {
+  const { worldId } = useParams<{ worldId: string }>();
+  const navigate = useNavigate();
 
-export function NpcGenerator() {
-  const [form, setForm] = useState<FormState>(initialForm);
+  const [form, setForm] = useState<FormState>({ prompt: '', setting: '', tone: '' });
+  const [settingTouched, setSettingTouched] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const worldQuery = trpc.world.get.useQuery(
+    { id: worldId! },
+    { enabled: Boolean(worldId) }
+  );
+
   const generateMutation = trpc.npc.generate.useMutation();
+  const createMutation = trpc.npc.create.useMutation({
+    onSuccess: (npc) => {
+      navigate(`/worlds/${worldId}/npcs/${npc.id}`);
+    },
+  });
+
+  useEffect(() => {
+    if (worldQuery.data?.description && !settingTouched) {
+      setForm((prev) => ({ ...prev, setting: worldQuery.data.description ?? '' }));
+    }
+  }, [worldQuery.data?.description, settingTouched]);
 
   const isGenerating = generateMutation.isPending;
+  const isSaving = createMutation.isPending;
   const result = generateMutation.data;
 
   const submitGeneration = () => {
@@ -55,7 +71,6 @@ export function NpcGenerator() {
     if (!result?.description) {
       return;
     }
-
     try {
       await navigator.clipboard.writeText(result.description);
       setCopied(true);
@@ -65,20 +80,57 @@ export function NpcGenerator() {
     }
   };
 
-  const handleGenerateAgain = () => {
-    submitGeneration();
+  const handleSaveToWorld = () => {
+    if (!result || !worldId) {
+      return;
+    }
+    createMutation.mutate({
+      worldId,
+      name: result.name,
+      description: result.description,
+      imageBase64: result.imageBase64,
+      imageMediaType: result.imageMediaType,
+      generationPrompt: form.prompt.trim() || undefined,
+      generationSetting: form.setting.trim() || undefined,
+      generationTone: form.tone.trim() || undefined,
+    });
   };
+
+  if (worldQuery.isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <Skeleton className="h-8 w-64" />
+      </div>
+    );
+  }
+
+  if (worldQuery.isError || !worldQuery.data) {
+    return (
+      <div className="container mx-auto p-6">
+        <p className="text-destructive">{worldQuery.error?.message ?? 'World not found'}</p>
+        <Button variant="link" asChild className="mt-4 px-0">
+          <Link to="/worlds">Back to worlds</Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">
       <div className="space-y-6">
         <div>
+          <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
+            <Link to={`/worlds/${worldId}`}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {worldQuery.data.name}
+            </Link>
+          </Button>
           <div className="flex items-center gap-2">
             <Users className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">NPC Generator</h1>
+            <h1 className="text-3xl font-bold">Create NPC</h1>
           </div>
           <p className="mt-2 text-muted-foreground">
-            Describe the NPC you need and get a name, session-ready description, and portrait.
+            Generate an NPC for {worldQuery.data.name}. Save it to add the character to this world.
           </p>
         </div>
 
@@ -87,12 +139,12 @@ export function NpcGenerator() {
             <Label htmlFor="prompt">Prompt</Label>
             <Textarea
               id="prompt"
-              placeholder="e.g. A nervous halfling fence who knows too much about the thieves' guild in Waterdeep"
+              placeholder="e.g. A nervous halfling fence who knows too much about the thieves' guild"
               value={form.prompt}
-              onChange={(event) => setForm((prev) => ({ ...prev, prompt: event.target.value }))}
+              onChange={(e) => setForm((prev) => ({ ...prev, prompt: e.target.value }))}
               rows={4}
               required
-              disabled={isGenerating}
+              disabled={isGenerating || isSaving}
             />
           </div>
 
@@ -101,10 +153,13 @@ export function NpcGenerator() {
               <Label htmlFor="setting">Setting (optional)</Label>
               <Input
                 id="setting"
-                placeholder="e.g. Sword Coast, late autumn"
+                placeholder="Pre-filled from world description"
                 value={form.setting}
-                onChange={(event) => setForm((prev) => ({ ...prev, setting: event.target.value }))}
-                disabled={isGenerating}
+                onChange={(e) => {
+                  setSettingTouched(true);
+                  setForm((prev) => ({ ...prev, setting: e.target.value }));
+                }}
+                disabled={isGenerating || isSaving}
               />
             </div>
             <div className="space-y-2">
@@ -113,13 +168,13 @@ export function NpcGenerator() {
                 id="tone"
                 placeholder="e.g. grim, comedic, heroic"
                 value={form.tone}
-                onChange={(event) => setForm((prev) => ({ ...prev, tone: event.target.value }))}
-                disabled={isGenerating}
+                onChange={(e) => setForm((prev) => ({ ...prev, tone: e.target.value }))}
+                disabled={isGenerating || isSaving}
               />
             </div>
           </div>
 
-          <Button type="submit" disabled={isGenerating || !form.prompt.trim()}>
+          <Button type="submit" disabled={isGenerating || isSaving || !form.prompt.trim()}>
             <Sparkles className="mr-2 h-4 w-4" />
             {isGenerating ? 'Generating…' : 'Generate'}
           </Button>
@@ -131,6 +186,15 @@ export function NpcGenerator() {
             className="max-w-2xl rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
           >
             {generateMutation.error.message}
+          </div>
+        )}
+
+        {createMutation.isError && (
+          <div
+            role="alert"
+            className="max-w-2xl rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            {createMutation.error.message}
           </div>
         )}
 
@@ -155,7 +219,7 @@ export function NpcGenerator() {
           <Card className="max-w-2xl">
             <CardHeader>
               <CardTitle>{result.name}</CardTitle>
-              <CardDescription>Generated NPC</CardDescription>
+              <CardDescription>Generated NPC — save to add to {worldQuery.data.name}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <img
@@ -168,11 +232,15 @@ export function NpcGenerator() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-wrap gap-2">
+              <Button type="button" onClick={handleSaveToWorld} disabled={isSaving}>
+                <Save className="mr-2 h-4 w-4" />
+                {isSaving ? 'Saving…' : 'Save to world'}
+              </Button>
               <Button type="button" variant="outline" onClick={handleCopyDescription}>
                 <Copy className="mr-2 h-4 w-4" />
                 {copied ? 'Copied!' : 'Copy description'}
               </Button>
-              <Button type="button" variant="secondary" onClick={handleGenerateAgain}>
+              <Button type="button" variant="secondary" onClick={submitGeneration} disabled={isSaving}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Generate again
               </Button>
